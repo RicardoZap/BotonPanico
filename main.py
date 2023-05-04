@@ -20,7 +20,7 @@ class DatosRequired(BaseModel):
     unidad: str
     device: str
     contacto: Optional[str]
-    telefono: Optional[int]
+    numero_contacto: Optional[int]
     notas: Optional[str]
 
 jsession_public = None
@@ -113,6 +113,7 @@ async def setAlerta(datos: DatosRequired):
         json_response = {
             "unidad": datos.unidad,
             "nombre_contacto": datos.contacto,
+            "numero_contacto": datos.numero_contacto,
             "FechaHoraEvento": now,
             "GPS": url_gps,
             "video": url_video,
