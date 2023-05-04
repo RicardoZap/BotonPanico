@@ -6,7 +6,7 @@ import requests
 import datetime
 import os
 from dotenv import load_dotenv
-import pyodbc
+#import pyodbc
 
 load_dotenv()
 
@@ -29,14 +29,16 @@ urlGPS = None
 urlVideo = None
 account = os.getenv("ACCOUNT")
 password = os.getenv("PASSWORD")
-cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={os.getenv("SERVER")};DATABASE={os.getenv("DATABASE")};UID={os.getenv("USERNAME_DB")};PWD={os.getenv("PASSWORD_DB")}')
+#cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={os.getenv("SERVER")};DATABASE={os.getenv("DATABASE")};UID={os.getenv("USERNAME_DB")};PWD={os.getenv("PASSWORD_DB")}')
 
 @app.get("/")
 def index():
     return {"message" : "Hola, soy FastApi"}
 
-@app.post("/login")
-async def login(account, password):
+@app.get("/login")
+async def login():
+    global account
+    global password
     url = "http://187.188.171.164:8088/StandardApiAction_login.action?account={}&password={}".format(account, password)
     headers = {
         "Content-Type": "application/json-p"
@@ -104,7 +106,7 @@ async def getVideo():
 async def setAlerta(datos: DatosRequired):
     try:
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        await login(account, password)
+        await login()
         url_gps = await getGPSMap()
         url_video = await getVideo()
  
@@ -124,13 +126,13 @@ async def setAlerta(datos: DatosRequired):
 async def log():
     fecha = datetime.datetime.now()
     try:
-        cursor = cnxn.cursor()
+        #cursor = cnxn.cursor()
         # Hace la inserción a la tabla "log"
-        cursor.execute(f"INSERT INTO log (campo1) VALUES ('{fecha}')")
-        cnxn.commit()
+        #cursor.execute(f"INSERT INTO log (campo1) VALUES ('{fecha}')")
+        #cnxn.commit()
 
         return {'mensaje': 'Inserción exitosa'}
     except Exception as e:
         # En caso de error, hace un rollback y regresa el mensaje de error
-        cnxn.rollback()
+        #cnxn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
