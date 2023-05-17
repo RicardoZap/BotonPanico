@@ -1,12 +1,12 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import requests 
-import datetime
+from datetime import datetime
 import os
 from dotenv import load_dotenv
-#import pyodbc
+import pyodbc
 
 load_dotenv()
 
@@ -19,9 +19,13 @@ class Auth(BaseModel):
 class DatosRequired(BaseModel):
     unidad: str
     device: str
-    contacto: Optional[str]
+    primer_nombre: str
+    segundo_nombre: Optional[str]
+    apellido_paterno: str
+    apellido_materno: str
     numero_contacto: Optional[int]
     notas: Optional[str]
+    fecha_evento: str
 
 jsession_public = None
 idDispositivo = "10512"
@@ -29,7 +33,6 @@ urlGPS = None
 urlVideo = None
 account = os.getenv("ACCOUNT")
 password = os.getenv("PASSWORD")
-#cnxn = pyodbc.connect(f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={os.getenv("SERVER")};DATABASE={os.getenv("DATABASE")};UID={os.getenv("USERNAME_DB")};PWD={os.getenv("PASSWORD_DB")}')
 
 @app.get("/")
 def index():
@@ -91,7 +94,7 @@ async def getVideo():
     global jsession_public
     global idDispositivo
     global urlVideo
-    url = "http://187.188.171.164:8088/808gps/open/player/video.html?lang=en&devIdno={}&jsession={}".format(idDispositivo, jsession_public)
+    url = "http://187.188.171.164:8088/808gps/open/player/video.html?lang=en&devIdno={}&channel={}&jsession={}".format(idDispositivo, 2, jsession_public)
     headers = {
         "Content-Type": "application/json-p"
     }
@@ -105,35 +108,39 @@ async def getVideo():
 @app.post("/setAlerta")
 async def setAlerta(datos: DatosRequired):
     try:
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        print(fecha_actual)
         await login()
         url_gps = await getGPSMap()
         url_video = await getVideo()
  
         json_response = {
             "unidad": datos.unidad,
-            "nombre_contacto": datos.contacto,
+            "primer_nombre_contacto": datos.primer_nombre,
+            "segundo_nombre_contacto": datos.segundo_nombre,
+            "apellido_paterno_contacto": datos.apellido_paterno,
+            "apellido_materno_contacto": datos.apellido_materno,
             "numero_contacto": datos.numero_contacto,
-            "FechaHoraEvento": now,
+            "FechaHoraEvento": fecha_actual,
             "GPS": url_gps,
             "video": url_video,
             "notas": datos.notas
         }
+        await log(json_response)
         return JSONResponse(json_response)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/insertLog")
-async def log():
-    fecha = datetime.datetime.now()
+async def log(json):
     try:
-        #cursor = cnxn.cursor()
-        # Hace la inserción a la tabla "log"
-        #cursor.execute(f"INSERT INTO log (campo1) VALUES ('{fecha}')")
-        #cnxn.commit()
-
+        cnxn = pyodbc.connect(f'DRIVER={os.getenv("DRIVER")};SERVER={os.getenv("SERVER")};DATABASE={os.getenv("DATABASE")};UID={os.getenv("USERNAME_DB")};PWD={os.getenv("PASSWORD_DB")};')
+        cursor = cnxn.cursor()
+        params = (json["unidad"],10512,json["primer_nombre_contacto"],json["segundo_nombre_contacto"],json["apellido_paterno_contacto"],json["apellido_materno_contacto"],json["video"],json["GPS"],json["notas"],json["FechaHoraEvento"])
+        cursor.execute("{CALL ins_Envio_Evento (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}", params)
+        cursor.commit()
+        cursor.close()
+        cnxn.close()
         return {'mensaje': 'Inserción exitosa'}
     except Exception as e:
-        # En caso de error, hace un rollback y regresa el mensaje de error
-        #cnxn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
