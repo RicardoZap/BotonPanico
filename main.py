@@ -79,7 +79,7 @@ async def getGPSMap():
     global idDispositivo
     global urlGPS
     url = "http://187.188.171.164:8088/808gps/open/map/vehicleMap.html?jsession={}&devIdno={}".format(jsession_public, idDispositivo)
-    url2 = "http://187.188.171.164:8088/StandardApiAction_getDeviceStatus.action?jsession={}&devIdno={}&language=zh".format(jsession_public, idDispositivo)
+    url2 = "http://187.188.171.164:8088/StandardApiAction_getDeviceStatus.action?jsession={}&devIdno={}".format(jsession_public, idDispositivo)
 
     headers = {
         "Content-Type": "application/json-p"
@@ -87,18 +87,11 @@ async def getGPSMap():
     try:
         response = requests.get(url, headers)
         response2 = requests.get(url2, headers)
-        response2_json = response2.json()
-        lat = response2_json["status"][0]["lat"]
-        lng = response2_json["status"][0]["lng"]
-        mlng = response2_json["status"][0]["mlng"]
-        mlat = response2_json["status"][0]["mlat"]
+
         urlGPS = url
         gps = {
                 "GPS": url,
-                "lat": lat,
-                "lng": lng,
-                "mlng": mlng,
-                "mlat": mlat
+                "GPSData": url2
             }
         return gps
     except Exception as e:
@@ -138,10 +131,7 @@ async def setAlerta(datos: DatosRequired):
             "numero_contacto": datos.numero_contacto,
             "FechaHoraEvento": fecha_actual,
             "GPS": url_gps["GPS"],
-            "lat": url_gps["lat"],
-            "lng": url_gps["lng"],
-            "mlng": url_gps["mlng"],
-            "mlat": url_gps["mlat"],
+            "GPSData": url_gps["GPSData"],
             "video1": camara1,
             "video2": camara2,
             "notas": datos.notas
