@@ -123,7 +123,7 @@ async def setAlerta(datos: DatosRequired):
         camara1= url_video + "&index=1"
         camara2= url_video + "&index=2"
         json_response = {
-            "unidad": datos.unidad,
+            "concesion": datos.unidad,
             "primer_nombre_contacto": datos.primer_nombre,
             "segundo_nombre_contacto": datos.segundo_nombre,
             "apellido_paterno_contacto": datos.apellido_paterno,
@@ -131,9 +131,10 @@ async def setAlerta(datos: DatosRequired):
             "numero_contacto": datos.numero_contacto,
             "FechaHoraEvento": fecha_actual,
             "GPS": url_gps["GPS"],
-            "GPSData": url_gps["GPSData"],
-            "video1": camara1,
-            "video2": camara2,
+            "video": [
+                camara1,
+                camara2
+            ],
             "notas": datos.notas
         }
         await log(json_response)
@@ -146,7 +147,7 @@ async def log(json):
     try:
         cnxn = pyodbc.connect(f'DRIVER={os.getenv("DRIVER")};SERVER={os.getenv("SERVER")};DATABASE={os.getenv("DATABASE")};UID={os.getenv("USERNAME_DB")};PWD={os.getenv("PASSWORD_DB")};')
         cursor = cnxn.cursor()
-        params = (json["unidad"],10512,json["primer_nombre_contacto"],json["segundo_nombre_contacto"],json["apellido_paterno_contacto"],json["apellido_materno_contacto"],json["video1"],json["GPS"],json["notas"],json["FechaHoraEvento"])
+        params = (json["concesion"],10512,json["primer_nombre_contacto"],json["segundo_nombre_contacto"],json["apellido_paterno_contacto"],json["apellido_materno_contacto"],json["video"][0],json["GPS"],json["notas"],json["FechaHoraEvento"])
         cursor.execute("{CALL ins_Envio_Evento (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}", params)
         cursor.commit()
         cursor.close()
