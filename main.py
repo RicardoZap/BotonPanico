@@ -143,10 +143,10 @@ async def getGPSMap():
         data = response2.json()
         gps_info = {
             "speed": data["status"][0]["sp"],
-            "ID": data["status"][0]["vid"],
+            "ID": (str(data["status"][0]["vid"])).replace('-',''),
             "Course": data["status"][0]["hx"],
-            "longitud": data["status"][0]["mlng"],
-            "latitud": data["status"][0]["mlat"],
+            "longitud": float(str(data["status"][0]["mlng"])),
+            "latitud": float(str(data["status"][0]["mlat"])),
             "altitud": 0,
             "Date": data["status"][0]["gt"]
         }
